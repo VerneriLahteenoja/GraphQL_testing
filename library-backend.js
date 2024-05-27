@@ -67,8 +67,8 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
+    bookCount: async () => Book.countDocuments(),
+    authorCount: async () => Author.countDocuments(),
     allBooks: async (root, args) => {
       return Book.find({}).populate('author', { name: 1, _id: 1, born: 1 })
     },
