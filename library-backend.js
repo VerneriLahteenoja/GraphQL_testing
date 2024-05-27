@@ -1,6 +1,6 @@
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
-const { v1: uuid } = require('uuid')
+const { GraphQLError } = require('graphql')
 
 const mongoose = require('mongoose')
 mongoose.set('strictQuery', false)
@@ -91,28 +91,79 @@ const resolvers = {
       const authorExists = await Author.findOne({ name: args.author })
       if (authorExists) {
         const newBook = new Book({ ...args, author: authorExists._id })
-        console.log({ ...newBook })
-        return newBook.save()
+        try {
+          await newBook.save()
+        } catch (error) {
+          throw new GraphQLError('Adding book failed', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              invalidArgs: args.title,
+              error
+            }
+          })
+        }
+        return newBook.populate('author', { name: 1, _id: 1, born: 1, bookCount: 1 })
       } else {
+        console.log('no existing author, adding new...')
         const newAuthor = new Author({ name: args.author, born: args.born || null })
-        const savedAuthor = await newAuthor.save()
-        const newBook = new Book({ ...args, author: savedAuthor._id })
-        return newBook.save()
+        const newBook = new Book({ ...args, author: newAuthor._id })
+        try {
+          await newAuthor.save()
+        } catch (error) {
+          throw new GraphQLError('Adding new author failed', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              invalidArgs: args.author,
+              error
+            }
+          })
+        }
+        console.log('new author added')
+        try {
+          await newBook.save()
+        } catch (error) {
+          throw new GraphQLError('Adding book failed', {
+            extensions: {
+              code: 'BAD_USER_INPUT',
+              invalidArgs: args.title,
+              error
+            }
+          })
+        }
+        return newBook.populate('author', { name: 1, _id: 1, born: 1, bookCount: 1 })
       }
     },
     addAuthor: async (root, args) => {
       const author = new Author({ ...args, born: args.born || null })
-      return author.save()
-    },
-    editAuthor: (root, args) => {
-      console.log(args)
-      const author = authors.find(a => a.name === args.name)
-      if (!author) {
-        return null
+      try {
+        author.save()
+      } catch (error) {
+        throw new GraphQLError('Adding author failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error
+          }
+        })
       }
-      const updatedAuthor = { ...author, born: args.setBornTo }
-      authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
-      return updatedAuthor
+      return author
+    },
+    editAuthor: async (root, args) => {
+      console.log(args)
+      const author = await Author.findOne({ name: args.name })
+      author.born = args.setBornTo
+      try {
+        author.save()
+      } catch (error) {
+        throw new GraphQLError('Editing author failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args,
+            error
+          }
+        })
+      }
+      return author
     }
   }
 }
