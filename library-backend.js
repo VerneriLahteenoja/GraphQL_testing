@@ -85,6 +85,7 @@ const typeDefs = `
     authorCount: Int
     allBooks(author: String, genre: String): [Book!]!
     allAuthors: [Author]
+    allGenres: [String!]!
   }
 `
 
@@ -97,6 +98,13 @@ const resolvers = {
     },
     allAuthors: async (root, args) => {
       return Author.find({})
+    },
+    allGenres: async (root, args) => {
+      const books = await Book.find({})
+      const genres = books.reduce((acc, book) => {
+        return acc.concat(book.genres)
+      }, [])
+      return [...new Set(genres)] 
     },
     me: (root, args, context) => {
       return context.currentUser
