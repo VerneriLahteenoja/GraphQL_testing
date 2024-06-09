@@ -81,6 +81,7 @@ const typeDefs = `
 
   type Query {
     me: User
+    favoriteBooks: [Book!]!
     bookCount: Int
     authorCount: Int
     allBooks(author: String, genre: String): [Book!]!
@@ -108,6 +109,17 @@ const resolvers = {
     },
     me: (root, args, context) => {
       return context.currentUser
+    },
+    favoriteBooks: async (root, args, context) => {
+      if (!context.currentUser) {
+        throw new GraphQLError('Not authenticated', {
+          extensions: {
+            code: 'FORBIDDEN'
+          }
+        })
+      }
+      const user = context.currentUser
+      return Book.find({ genres: user.favoriteGenre }).populate('author', { name: 1, _id: 1, born: 1 })
     }
   },
   Author: {
