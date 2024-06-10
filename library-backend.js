@@ -82,6 +82,7 @@ const typeDefs = `
   type Query {
     me: User
     favoriteBooks: [Book!]!
+    booksByGenre(genre: String!): [Book!]!
     bookCount: Int
     authorCount: Int
     allBooks(author: String, genre: String): [Book!]!
@@ -120,6 +121,9 @@ const resolvers = {
       }
       const user = context.currentUser
       return Book.find({ genres: user.favoriteGenre }).populate('author', { name: 1, _id: 1, born: 1 })
+    },
+    booksByGenre: async (root, args) => {
+      return Book.find({ genres: args.genre }).populate('author', { name: 1, _id: 1, born: 1 })
     }
   },
   Author: {
