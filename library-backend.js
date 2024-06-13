@@ -34,15 +34,18 @@ const startServer = async () => {
   const httpServer = http.createServer(app)
   const server = new ApolloServer({
     schema: makeExecutableSchema({ typeDefs, resolvers }),
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })], // Drain the server on shutdown "gracefully"
   })
-  await server.start()
+
+  await server.start() // Start with await to make sure GraphQL server runs before express starts
+  
   app.use(
     '/',
     cors(),
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
+        // Handle authorization header
         const auth = req ? req.headers.authorization : null
         if (auth && auth.startsWith('Bearer ')) {
           const decodedToken = jwt.verify(auth.substring(7), process.env.JWT_SECRET)
@@ -52,6 +55,7 @@ const startServer = async () => {
       }
     })
   )
+
   const PORT = 4000
   httpServer.listen(PORT, () => 
   console.log(`Server running on http://localhost:${PORT}`))
