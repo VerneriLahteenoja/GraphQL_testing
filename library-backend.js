@@ -1,11 +1,14 @@
+const { WebSocketServer } = require('ws')
+const { useServer } = require('graphql-ws/lib/use/ws')
+
 const { ApolloServer } = require('@apollo/server')
 const { expressMiddleware } = require('@apollo/server/express4')
 const { ApolloServerPluginDrainHttpServer } = require('@apollo/server/plugin/drainHttpServer')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
+
 const express = require('express')
 const cors = require('cors')
 const http = require('http')
-
 const jwt = require('jsonwebtoken')
 
 const mongoose = require('mongoose')
@@ -32,9 +35,27 @@ mongoose.connect(MONGODB_URI)
 const startServer = async () => {
   const app = express()
   const httpServer = http.createServer(app)
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/', // path is the same that express serves
+  })
+
+  const schema = makeExecutableSchema({ typeDefs, resolvers })
+  const serverCleanup = useServer({ schema }, wsServer)
+
   const server = new ApolloServer({
-    schema: makeExecutableSchema({ typeDefs, resolvers }),
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })], // Drain the server on shutdown "gracefully"
+    schema,
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), // Drain the server on shutdown "gracefully"
+    {
+      async serverWillStart() { // Handles WebSocket shutdown <https://www.apollographql.com/docs/apollo-server/data/subscriptions/>
+        return {
+          async drainServer() {
+            await serverCleanup.dispose()
+          }
+        }
+      }
+    }
+    ]
   })
 
   await server.start() // Start with await to make sure GraphQL server runs before express starts
