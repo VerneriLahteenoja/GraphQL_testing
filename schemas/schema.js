@@ -64,6 +64,11 @@ const typeDefs = `
     allAuthors: [Author]
     allGenres: [String!]!
   }
+
+  type Subscription {
+    authorAdded: Author!,
+    bookAdded: Book!
+  }
 `
 
 module.exports = typeDefs
