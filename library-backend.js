@@ -32,7 +32,7 @@ mongoose.connect(MONGODB_URI)
     console.log('error connecting to MongoDB', error.message)
   })
 
-const startServer = async () => {
+const start = async () => {
   const app = express()
   const httpServer = http.createServer(app)
   const wsServer = new WebSocketServer({
@@ -66,7 +66,7 @@ const startServer = async () => {
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        // Handle authorization header
+        // Handle authorization header, sets currentUser to context
         const auth = req ? req.headers.authorization : null
         if (auth && auth.startsWith('Bearer ')) {
           const decodedToken = jwt.verify(auth.substring(7), process.env.JWT_SECRET)
@@ -81,4 +81,4 @@ const startServer = async () => {
   httpServer.listen(PORT, () => 
   console.log(`Server running on http://localhost:${PORT}`))
 }
-startServer()
+start()
