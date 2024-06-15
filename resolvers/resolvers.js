@@ -104,6 +104,7 @@ const resolvers = {
               }
             })
           }
+          pubsub.publish('BOOK_ADDED', { bookAdded: newBook.populate('author') })
           return newBook.populate('author', { name: 1, _id: 1, born: 1, bookCount: 1 })
         } else {
           console.log('no existing author, adding new...')
@@ -120,6 +121,7 @@ const resolvers = {
               }
             })
           }
+          pubsub.publish('AUTHOR_ADDED', { authorAdded: newAuthor })
           console.log('new author added')
           try {
             await newBook.save()
@@ -132,6 +134,7 @@ const resolvers = {
               }
             })
           }
+          pubsub.publish('BOOK_ADDED', { bookAdded: newBook.populate('author') })
           return newBook.populate('author', { name: 1, _id: 1, born: 1, bookCount: 1 })
         }
       },
@@ -179,6 +182,9 @@ const resolvers = {
     Subscription: {
       authorAdded: {
         subscribe: () => pubsub.asyncIterator('AUTHOR_ADDED')
+      },
+      bookAdded: {
+        subscribe: () => pubsub.asyncIterator('BOOK_ADDED')
       }
     }
 }
