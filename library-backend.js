@@ -18,6 +18,7 @@ const User = require('./models/user')
 
 const typeDefs = require('./schemas/schema')
 const resolvers = require('./resolvers/resolvers')
+const authorLoader = require('./loaders/authorLoader')
 
 require('dotenv').config()
 
@@ -71,8 +72,10 @@ const start = async () => {
         if (auth && auth.startsWith('Bearer ')) {
           const decodedToken = jwt.verify(auth.substring(7), process.env.JWT_SECRET)
           const currentUser = await User.findById(decodedToken.id)
-          return { currentUser }
+          // Set dataloaders to context
+          return { currentUser, authorLoader }
         }
+        return { authorLoader }
       }
     })
   )

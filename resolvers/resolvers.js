@@ -14,7 +14,7 @@ const resolvers = {
       bookCount: async () => Book.countDocuments(),
       authorCount: async () => Author.countDocuments(),
       allBooks: async (root, args) => {
-        return Book.find({}).populate('author', { name: 1, _id: 1, born: 1 })
+        return Book.find({}).populate('author')
       },
       allAuthors: async (root, args) => {
         return Author.find({})
@@ -53,6 +53,13 @@ const resolvers = {
         return (
           booksByAuthor.length
       )}
+    },
+    Book: {
+      title: (root) => root.title,
+      published: (root) => root.published,
+      // Grab authorLoader from context and load by book's author's id
+      author: async (root, _args, { authorLoader }) => authorLoader.load(root.author._id),
+      genres: (root) => root.genres
     },
     Mutation: {
       createUser: async (root, args) => {
