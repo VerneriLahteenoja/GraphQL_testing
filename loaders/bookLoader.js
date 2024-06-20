@@ -2,7 +2,7 @@ const DataLoader = require('dataloader')
 const Book = require('../models/book')
 
 const batchBooks = async (bookIds) => {
-    const books = await Book.find({ _id: { $in: bookIds } }).populate('author')
+    const books = await Book.find({ _id: { $in: bookIds } })
     const bookMap = books.reduce((acc, book) => {
         acc[book._id] = book;
     }, {});
