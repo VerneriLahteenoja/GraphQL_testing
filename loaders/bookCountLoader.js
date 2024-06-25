@@ -1,5 +1,5 @@
 const DataLoader = require('dataloader')
-const Book = require('../models/author')
+const Book = require('../models/book')
 
 const batchBooks = async (authorIds) => {
   const books = await Book.find({ author: { $in: authorIds } });
