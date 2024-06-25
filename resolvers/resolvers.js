@@ -48,11 +48,7 @@ const resolvers = {
       name: (root) => root.name,
       born: (root) => root.born,
       id: (root) => root.id,
-      bookCount: async (root) => {
-        const booksByAuthor = await Book.find({ author: root.id }).exec() //TODO: Create a dataloader for bookcounts
-        return (
-          booksByAuthor.length
-      )}
+      bookCount: async (root, _args, { bookCountLoader }) => bookCountLoader.load(root.id)
     },
     Book: {
       title: (root) => root.title,
